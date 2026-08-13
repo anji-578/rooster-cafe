@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+data/
+data/cafe-store.json
+.env*.local
+.DS_Store
+*.log
+web/data/
+brand/reference-recording.mp4
+brand/reference-frames/
+web/public/ref/
