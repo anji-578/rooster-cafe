@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { printReceipt } from "@/lib/cafe/print-client";
 
 type FloorItem = {
   table: {
@@ -40,20 +41,44 @@ type SessionDetail = {
     total: number;
     paymentMethod: string | null;
     paidAt: string | null;
+    printedAt?: string | null;
   } | null;
-  settings: { gstPercent: number; currency: string; reviewRewardPercent: number };
+  settings: {
+    gstPercent: number;
+    currency: string;
+    reviewRewardPercent: number;
+    autoPrintOnPay?: boolean;
+    printerMode?: string;
+    printAgentUrl?: string;
+  };
 };
 
 export default function PosPage() {
   const [floor, setFloor] = useState<FloorItem[]>([]);
+  const [recentBills, setRecentBills] = useState<
+    {
+      id: string;
+      sessionId: string;
+      tableCode: string;
+      total: number;
+      paymentMethod: string | null;
+      paidAt: string | null;
+      printedAt: string | null;
+    }[]
+  >([]);
   const [selected, setSelected] = useState<SessionDetail | null>(null);
   const [discount, setDiscount] = useState(0);
   const [paying, setPaying] = useState(false);
+  const [printing, setPrinting] = useState(false);
+  const [printMsg, setPrintMsg] = useState("");
 
   const load = useCallback(async () => {
     const res = await fetch("/api/cafe?action=pos");
     const json = await res.json();
-    if (res.ok) setFloor(json.floor || []);
+    if (res.ok) {
+      setFloor(json.floor || []);
+      setRecentBills(json.recentBills || []);
+    }
   }, []);
 
   useEffect(() => {
@@ -70,6 +95,7 @@ export default function PosPage() {
     if (res.ok) {
       setSelected(json);
       setDiscount(json.session.discountPercent || 0);
+      setPrintMsg("");
     }
   }
 
@@ -87,9 +113,22 @@ export default function PosPage() {
     await openSession(selected.session.id);
   }
 
+  async function runPrint(billId?: string, sessionId?: string) {
+    setPrinting(true);
+    setPrintMsg("Sending to printer…");
+    try {
+      const result = await printReceipt({ billId, sessionId });
+      setPrintMsg(result.message);
+      if (sessionId) await openSession(sessionId);
+    } finally {
+      setPrinting(false);
+    }
+  }
+
   async function pay(method: "CASH" | "UPI" | "CARD") {
     if (!selected) return;
     setPaying(true);
+    setPrintMsg("");
     try {
       const res = await fetch("/api/cafe", {
         method: "POST",
@@ -104,8 +143,11 @@ export default function PosPage() {
       const json = await res.json();
       if (res.ok) {
         setSelected(json);
-        window.print();
         await load();
+        const auto = json.settings?.autoPrintOnPay !== false;
+        if (auto && json.bill?.id) {
+          await runPrint(json.bill.id, json.session.id);
+        }
       }
     } finally {
       setPaying(false);
@@ -123,7 +165,7 @@ export default function PosPage() {
         </div>
         <div className="flex gap-4 text-sm">
           <Link href="/kitchen">Kitchen</Link>
-          <Link href="/admin">Admin</Link>
+          <Link href="/admin">Admin / Printer</Link>
         </div>
       </header>
 
@@ -153,7 +195,9 @@ export default function PosPage() {
                 >
                   <p className="text-lg font-bold">{item.table.code}</p>
                   <p className="text-[10px] opacity-70">
-                    {item.table.kind === "SNOOKER" ? "Snooker" : `${item.table.seats} seats`}
+                    {item.table.kind === "SNOOKER"
+                      ? "Snooker"
+                      : `${item.table.seats} seats`}
                   </p>
                   {item.totals && (
                     <p className="mt-2 text-sm font-semibold">
@@ -167,6 +211,43 @@ export default function PosPage() {
               );
             })}
           </div>
+
+          {recentBills.length > 0 && (
+            <div className="mt-8">
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[#123A6D]/45">
+                Recent bills · reprint
+              </h2>
+              <ul className="space-y-2">
+                {recentBills.map((b) => (
+                  <li
+                    key={b.id}
+                    className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-sm shadow-sm"
+                  >
+                    <div>
+                      <p className="font-semibold">
+                        {b.tableCode} · ₹{b.total}
+                      </p>
+                      <p className="text-xs text-[#123A6D]/45">
+                        {b.paymentMethod || "—"}
+                        {b.printedAt ? " · printed" : " · not printed"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={printing}
+                      onClick={() => runPrint(b.id, b.sessionId)}
+                      className="rounded-full bg-[#4EA3E5] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white"
+                    >
+                      Print
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {printMsg && !selected && (
+                <p className="mt-2 text-xs text-[#123A6D]/60">{printMsg}</p>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="rounded-3xl bg-white p-5 shadow-sm print:shadow-none">
@@ -200,7 +281,7 @@ export default function PosPage() {
                   <li key={l.id} className="flex justify-between gap-3">
                     <span>
                       {l.qty}× {l.name}
-                      {l.kind === "SNOOKER" ? " 🎱" : ""}
+                      {l.kind === "SNOOKER" ? " · time" : ""}
                     </span>
                     <span>₹{l.unitPrice * l.qty}</span>
                   </li>
@@ -244,17 +325,46 @@ export default function PosPage() {
                     onClick={applyDiscount}
                     className="rounded-full bg-[#E8F3FC] px-4 py-2 text-xs font-semibold"
                   >
-                    Apply 5/10%
+                    Apply
                   </button>
                 </div>
               </div>
 
               {selected.bill?.paidAt ? (
-                <p className="mt-6 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                  Paid via {selected.bill.paymentMethod} · Ask guest for feedback
-                  (table QR or review link) · reward up to{" "}
-                  {selected.settings.reviewRewardPercent}% next visit
-                </p>
+                <div className="mt-6 space-y-3 print:hidden">
+                  <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    Paid via {selected.bill.paymentMethod}
+                    {selected.bill.printedAt ? " · printed" : " · not printed yet"}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      disabled={printing}
+                      onClick={() =>
+                        runPrint(selected.bill!.id, selected.session.id)
+                      }
+                      className="rounded-full bg-[#4EA3E5] py-3 text-xs font-semibold uppercase tracking-wider text-white"
+                    >
+                      {printing ? "Printing…" : "Print bill"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={printing}
+                      onClick={() =>
+                        printReceipt({
+                          billId: selected.bill!.id,
+                          forceBrowser: true,
+                        }).then((r) => setPrintMsg(r.message))
+                      }
+                      className="rounded-full bg-[#123A6D] py-3 text-xs font-semibold uppercase tracking-wider text-white"
+                    >
+                      Browser preview
+                    </button>
+                  </div>
+                  {printMsg && (
+                    <p className="text-xs text-[#123A6D]/60">{printMsg}</p>
+                  )}
+                </div>
               ) : (
                 <div className="mt-6 grid grid-cols-3 gap-2 print:hidden">
                   {(["CASH", "UPI", "CARD"] as const).map((m) => (
@@ -270,13 +380,6 @@ export default function PosPage() {
                   ))}
                 </div>
               )}
-
-              <div className="mt-6 hidden print:block">
-                <p className="text-center text-lg font-bold">Rooster Cafe & Dine</p>
-                <p className="text-center text-xs">
-                  Koramangala · Thank you · Scan table QR for feedback
-                </p>
-              </div>
             </div>
           )}
         </section>

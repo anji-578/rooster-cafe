@@ -1,12 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope } from "next/font/google";
+import { Fraunces, Outfit } from "next/font/google";
 import { Providers } from "@/components/layout/Providers";
 import "./globals.css";
 
-const sans = Manrope({
+const display = Fraunces({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  display: "swap",
+});
+
+const sans = Outfit({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -16,10 +23,11 @@ export const metadata: Metadata = {
     default: "Rooster",
     template: "%s | Rooster",
   },
-  description: "Rooster — food, drinks, and good vibes in Koramangala.",
+  description:
+    "Rooster Cafe & Dine — Mediterranean vibes, great food, and good company in Koramangala.",
   openGraph: {
     title: "Rooster",
-    description: "Scroll through our most loved dishes.",
+    description: "Food, drinks, and blue-sky vibes in Koramangala.",
     url: "https://www.roostercafe.in",
     siteName: "Rooster",
     type: "website",
@@ -28,7 +36,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ececec",
+  themeColor: "#1B6F9A",
   width: "device-width",
   initialScale: 1,
 };
@@ -37,8 +45,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={sans.variable}>
-      <body className="bg-[#ececec] text-[#222] antialiased">
+    <html lang="en" className={`${display.variable} ${sans.variable}`}>
+      <body className="bg-[#F7FBFD] text-[#0E3A52] antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

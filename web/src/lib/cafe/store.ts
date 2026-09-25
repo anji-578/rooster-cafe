@@ -1,17 +1,30 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { createSeedStore } from "./seed";
-import type { CafeStore } from "./types";
+import type { CafeSettings, CafeStore } from "./types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const STORE_PATH = path.join(DATA_DIR, "cafe-store.json");
 
 let writeChain: Promise<void> = Promise.resolve();
 
+const defaultSettings = (): CafeSettings => createSeedStore().settings;
+
+export function normalizeSettings(settings: Partial<CafeSettings> | undefined): CafeSettings {
+  return { ...defaultSettings(), ...settings };
+}
+
+function normalizeStore(store: CafeStore): CafeStore {
+  return {
+    ...store,
+    settings: normalizeSettings(store.settings),
+  };
+}
+
 async function ensureStore(): Promise<CafeStore> {
   try {
     const raw = await fs.readFile(STORE_PATH, "utf8");
-    return JSON.parse(raw) as CafeStore;
+    return normalizeStore(JSON.parse(raw) as CafeStore);
   } catch {
     const seed = createSeedStore();
     await fs.mkdir(DATA_DIR, { recursive: true });
@@ -30,9 +43,10 @@ export async function updateStore(
   const run = writeChain.then(async () => {
     const store = await ensureStore();
     const result = mutator(store) ?? store;
+    const normalized = normalizeStore(result);
     await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.writeFile(STORE_PATH, JSON.stringify(result, null, 2), "utf8");
-    return result;
+    await fs.writeFile(STORE_PATH, JSON.stringify(normalized, null, 2), "utf8");
+    return normalized;
   });
   writeChain = run.then(
     () => undefined,

@@ -2,13 +2,17 @@ import { NextResponse } from "next/server";
 import {
   attachGuest,
   createAndPayBill,
+  dispatchPrintToAgent,
   endSnooker,
   ensureSession,
   getAdminTables,
   getKitchenQueue,
   getPosFloor,
   getPosSession,
+  getReceiptForBill,
+  getReceiptForSession,
   getTableByToken,
+  markBillPrinted,
   placeOrder,
   regenerateTableToken,
   requestBill,
@@ -17,6 +21,7 @@ import {
   submitFeedback,
   updateOrderStatus,
   applyLoyaltyDiscount,
+  updatePrinterSettings,
 } from "@/lib/cafe/actions";
 
 type Body = Record<string, unknown>;
@@ -45,6 +50,17 @@ export async function GET(req: Request) {
       }
       case "admin-tables":
         return NextResponse.json(await getAdminTables());
+      case "receipt": {
+        const billId = searchParams.get("billId");
+        const sessionId = searchParams.get("sessionId");
+        if (billId) return NextResponse.json(await getReceiptForBill(billId));
+        if (sessionId)
+          return NextResponse.json(await getReceiptForSession(sessionId));
+        return NextResponse.json(
+          { error: "billId or sessionId required" },
+          { status: 400 }
+        );
+      }
       default:
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
     }
@@ -77,7 +93,12 @@ export async function POST(req: Request) {
       case "place-order":
         await placeOrder({
           token: String(body.token || ""),
-          items: (body.items as { menuItemId: string; qty: number; notes?: string }[]) || [],
+          items:
+            (body.items as {
+              menuItemId: string;
+              qty: number;
+              notes?: string;
+            }[]) || [],
         });
         return NextResponse.json(
           await getTableByToken(String(body.token || ""))
@@ -108,6 +129,43 @@ export async function POST(req: Request) {
         });
         return NextResponse.json(
           await getPosSession(String(body.sessionId || ""))
+        );
+      case "print-bill": {
+        const billId = String(body.billId || "");
+        const sessionId = String(body.sessionId || "");
+        let id = billId;
+        if (!id && sessionId) {
+          const data = await getReceiptForSession(sessionId);
+          id = data.receipt.billId;
+        }
+        const result = await dispatchPrintToAgent(id);
+        return NextResponse.json(result);
+      }
+      case "mark-printed":
+        await markBillPrinted(String(body.billId || ""));
+        return NextResponse.json({ ok: true });
+      case "update-printer":
+        return NextResponse.json(
+          await updatePrinterSettings({
+            printAgentUrl:
+              body.printAgentUrl !== undefined
+                ? String(body.printAgentUrl)
+                : undefined,
+            printerMode: body.printerMode as "agent" | "browser" | undefined,
+            autoPrintOnPay:
+              typeof body.autoPrintOnPay === "boolean"
+                ? body.autoPrintOnPay
+                : undefined,
+            cafeName:
+              body.cafeName !== undefined ? String(body.cafeName) : undefined,
+            address:
+              body.address !== undefined ? String(body.address) : undefined,
+            phone: body.phone !== undefined ? String(body.phone) : undefined,
+            receiptFooter:
+              body.receiptFooter !== undefined
+                ? String(body.receiptFooter)
+                : undefined,
+          })
         );
       case "apply-discount":
         await applyLoyaltyDiscount(

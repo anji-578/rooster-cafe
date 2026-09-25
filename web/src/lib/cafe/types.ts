@@ -107,12 +107,23 @@ export type Feedback = {
   rewardGranted: boolean;
 };
 
+export type PrinterMode = "agent" | "browser";
+
 export type CafeSettings = {
   cafeName: string;
+  address?: string;
+  phone?: string;
+  receiptFooter?: string;
   snookerRatePerMinute: number;
   gstPercent: number;
   reviewRewardPercent: number;
   currency: string;
+  /** LAN print agent URL reachable from laptop + tablet (e.g. http://192.168.1.10:9101) */
+  printAgentUrl: string;
+  /** Prefer thermal agent; browser = window.print fallback */
+  printerMode: PrinterMode;
+  /** Auto-print after payment */
+  autoPrintOnPay: boolean;
 };
 
 export type CafeStore = {

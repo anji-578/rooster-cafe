@@ -1,7 +1,7 @@
 export const siteConfig = {
-  name: "rooster Cafe & Dine",
-  shortName: "rooster",
-  tagline: "Enjoyed the food? We'd love to hear from you.",
+  name: "Rooster Cafe & Dine",
+  shortName: "Rooster",
+  tagline: "Blue skies indoors. Plates worth staying for.",
   locationLine1: "1A Block, Near Wipro Park",
   locationLine2: "Koramangala, Bengaluru",
   location: "1A Block, Near Wipro Park, Koramangala, Bengaluru",

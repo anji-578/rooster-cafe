@@ -1,93 +1,121 @@
 export type Dish = {
   id: string;
   name: string;
-  rank: number;
-  rating: number;
-  likes: number;
+  tag: string;
   price: string;
-  chef: string;
-  chefNote: string;
-  overview: string;
-  ingredients: string[];
+  blurb: string;
   image: string;
-  category: "food" | "drinks";
+  category: "food" | "drinks" | "space";
 };
 
-/** Signature dishes with photos */
+/** Signature dishes & drinks from cafe photos */
 export const dishes: Dish[] = [
   {
-    id: "coffee",
-    name: "House Coffee",
-    rank: 1,
-    rating: 4.9,
-    likes: 186,
-    price: "₹149",
-    chef: "Barista",
-    chefNote: "Smooth pull, every time.",
-    overview:
-      "Our signature brew — rich aroma, balanced body, and a clean finish. The Rooster morning ritual.",
-    ingredients: ["Fresh espresso", "Steamed milk", "House roast"],
-    image: "/dishes/coffee.jpg",
+    id: "creamy-pasta",
+    name: "Garden Alfredo Pasta",
+    tag: "Italian",
+    price: "₹160",
+    blurb: "Penne in a silky white sauce with peppers and broccoli.",
+    image: "/food/creamy-pasta.jpg",
+    category: "food",
+  },
+  {
+    id: "chilli-paneer",
+    name: "Chilli Paneer",
+    tag: "Starters",
+    price: "₹160",
+    blurb: "Glossy wok-tossed paneer with peppers and scallions.",
+    image: "/food/chilli-paneer.jpg",
+    category: "food",
+  },
+  {
+    id: "manchurian",
+    name: "Manchurian Special",
+    tag: "Chinese",
+    price: "₹180",
+    blurb: "Crispy bites in a rich dark sauce — a table favourite.",
+    image: "/food/manchurian.jpg",
+    category: "food",
+  },
+  {
+    id: "fried-rice",
+    name: "Fried Rice & Manchurian Bowl",
+    tag: "Combos",
+    price: "₹189",
+    blurb: "Half rice, half gravy — the full wok meal in one bowl.",
+    image: "/food/fried-rice-bowl.jpg",
+    category: "food",
+  },
+  {
+    id: "noodles",
+    name: "Hakka Noodles Plate",
+    tag: "Chinese",
+    price: "₹160",
+    blurb: "Stir-fried noodles with golden tofu and fresh greens.",
+    image: "/food/noodles-stirfry.jpg",
+    category: "food",
+  },
+  {
+    id: "maggi",
+    name: "Rooster Maggi Special",
+    tag: "Maggi",
+    price: "₹160",
+    blurb: "Loaded noodles with a Rooster masala finish.",
+    image: "/food/maggi-special.jpg",
+    category: "food",
+  },
+  {
+    id: "curry",
+    name: "House Curry & Roti",
+    tag: "Indian",
+    price: "₹180",
+    blurb: "Slow gravy, cream swirl, and soft flame-toasted rotis.",
+    image: "/food/curry-roti.jpg",
+    category: "food",
+  },
+  {
+    id: "onion-rings",
+    name: "Crispy Onion Rings",
+    tag: "Starters",
+    price: "₹120",
+    blurb: "Golden battered rings with house dipping sauce.",
+    image: "/food/onion-rings.jpg",
+    category: "food",
+  },
+  {
+    id: "mojito",
+    name: "Mint Mojito",
+    tag: "Drinks",
+    price: "₹89",
+    blurb: "Lime, mint, fizz — cold glass, busy evenings.",
+    image: "/food/mojito.jpg",
     category: "drinks",
   },
   {
-    id: "pizza",
-    name: "Woodfire Pizza",
-    rank: 2,
-    rating: 4.8,
-    likes: 154,
-    price: "₹349",
-    chef: "Kitchen",
-    chefNote: "Crisp base, molten cheese.",
-    overview:
-      "Italian classic from our oven — thin golden crust, generous toppings, and fresh herbs.",
-    ingredients: ["Flour base", "Mozzarella", "Tomato", "Basil", "Olive oil"],
-    image: "/dishes/pizza.jpg",
-    category: "food",
+    id: "shake",
+    name: "Chocolate Shake",
+    tag: "Drinks",
+    price: "₹80",
+    blurb: "Thick, creamy, finished with a chocolate swirl.",
+    image: "/food/chocolate-shake.jpg",
+    category: "drinks",
   },
   {
-    id: "pasta",
-    name: "Creamy Pasta",
-    rank: 3,
-    rating: 4.7,
-    likes: 132,
-    price: "₹299",
-    chef: "Kitchen",
-    chefNote: "Comfort in every fork.",
-    overview:
-      "Silky pasta tossed in a creamy sauce with herbs. A table favourite at Rooster.",
-    ingredients: ["Pasta", "Cream", "Garlic", "Herbs", "Parmesan"],
-    image: "/dishes/pasta.jpg",
-    category: "food",
+    id: "iced-coffee",
+    name: "Iced Coffee",
+    tag: "Drinks",
+    price: "₹80",
+    blurb: "Chilled brew with a soft foam crown.",
+    image: "/food/iced-coffee.jpg",
+    category: "drinks",
   },
   {
-    id: "momos",
-    name: "Steamed Momos",
-    rank: 4,
-    rating: 4.8,
-    likes: 168,
-    price: "₹199",
-    chef: "Kitchen",
-    chefNote: "Hot, juicy, addictive.",
-    overview:
-      "Soft steamed momos with spicy dipping sauce. Perfect for sharing — or not.",
-    ingredients: ["Flour wrap", "Veg filling", "Ginger", "Chili chutney"],
-    image: "/dishes/momos.jpg",
-    category: "food",
-  },
-  {
-    id: "burger",
-    name: "Rooster Burger",
-    rank: 5,
-    rating: 4.9,
-    likes: 201,
-    price: "₹279",
-    chef: "Kitchen",
-    chefNote: "Stacked and satisfying.",
-    overview:
-      "Juicy patty, soft bun, crisp lettuce, and house sauce. Our crowd-pleaser.",
-    ingredients: ["Bun", "Patty", "Cheese", "Lettuce", "House sauce"],
-    image: "/dishes/burger.jpg",
-    category: "food",
+    id: "punch",
+    name: "Rooster Punch",
+    tag: "Drinks",
+    price: "₹160",
+    blurb: "Bright citrus layers over ice — our house cooler.",
+    image: "/food/iced-punch.jpg",
+    category: "drinks",
   },
 ];

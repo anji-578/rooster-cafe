@@ -1,29 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #123a6d;
-  --navy: #123a6d;
-  --blue: #4ea3e5;
-  --soft: #f3f8fd;
+  --sky: #2f9bc8;
+  --sky-deep: #1b6f9a;
+  --navy: #0e3a52;
+  --foam: #f7fbfd;
+  --marble: #e8f1f6;
+  --gold: #c4a35a;
+  --ink: #0e3a52;
+  --muted: rgba(14, 58, 82, 0.62);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-paper: #ffffff;
-  --color-white: #ffffff;
-  --color-navy: #123a6d;
-  --color-navy-deep: #0d2a52;
-  --color-orange: #4ea3e5;
-  --color-orange-deep: #2f8fd6;
-  --color-ink: #123a6d;
-  --color-muted: rgba(18, 58, 109, 0.65);
-  --color-line: rgba(18, 58, 109, 0.12);
-  --color-soft: #f3f8fd;
+  --color-sky: var(--sky);
+  --color-sky-deep: var(--sky-deep);
+  --color-navy: var(--navy);
+  --color-foam: var(--foam);
+  --color-marble: var(--marble);
+  --color-gold: var(--gold);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-background: var(--foam);
+  --color-foreground: var(--ink);
   --font-sans: var(--font-sans);
-  --font-serif: var(--font-sans);
-  --font-script: var(--font-sans);
+  --font-display: var(--font-display);
 }
 
 * {
@@ -37,8 +37,8 @@ html {
 html,
 body {
   margin: 0;
-  background: #ffffff;
-  color: #123a6d;
+  background: var(--foam);
+  color: var(--ink);
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -55,36 +55,61 @@ img {
   user-select: none;
 }
 
-.btn-primary,
-.btn-orange {
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+.btn-sky {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #123a6d;
+  background: var(--sky-deep);
   color: white;
-  padding: 0.9rem 1.5rem;
+  padding: 0.95rem 1.6rem;
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  transition: transform 0.25s ease, background 0.25s ease;
 }
 
-.btn-orange {
-  background: #4ea3e5;
+.btn-sky:hover {
+  background: var(--navy);
+  transform: translateY(-1px);
 }
 
-.btn-ghost {
+.btn-ghost-light {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(18, 58, 109, 0.18);
-  color: #123a6d;
-  padding: 0.9rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: white;
+  padding: 0.95rem 1.6rem;
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  background: white;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  transition: background 0.25s ease;
+}
+
+.btn-ghost-light:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.marble-wash {
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 0%, rgba(47, 155, 200, 0.12), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 20%, rgba(196, 163, 90, 0.1), transparent 50%),
+    linear-gradient(180deg, #f7fbfd 0%, #eef6fa 100%);
+}
+
+.sky-grid {
+  background-image:
+    linear-gradient(rgba(27, 111, 154, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27, 111, 154, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
 }

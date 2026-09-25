@@ -114,10 +114,16 @@ export function createSeedStore(): CafeStore {
   return {
     settings: {
       cafeName: "Rooster",
+      address: "1A Block, Koramangala, Bengaluru",
+      phone: "",
+      receiptFooter: "Thank you · Visit again",
       snookerRatePerMinute: 5, // ₹5 / min → ₹300 / hour
       gstPercent: 5,
       reviewRewardPercent: 10,
       currency: "₹",
+      printAgentUrl: "http://127.0.0.1:9101",
+      printerMode: "agent",
+      autoPrintOnPay: true,
     },
     tables: makeDiningTables(),
     menu: menuSeed.map((m) => ({ ...m, id: nanoid(8) })),

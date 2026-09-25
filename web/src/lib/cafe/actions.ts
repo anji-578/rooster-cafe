@@ -272,7 +272,16 @@ export async function getPosFloor() {
       : null;
     return { table, session, totals, activePlay };
   });
-  return { floor, settings: store.settings };
+  const recentBills = store.bills.slice(0, 12).map((b) => ({
+    id: b.id,
+    sessionId: b.sessionId,
+    tableCode: b.tableCode,
+    total: b.total,
+    paymentMethod: b.paymentMethod,
+    paidAt: b.paidAt,
+    printedAt: b.printedAt,
+  }));
+  return { floor, recentBills, settings: store.settings };
 }
 
 export async function getPosSession(sessionId: string) {
@@ -401,7 +410,7 @@ export async function createAndPayBill(input: {
       total: totals.total,
       paymentMethod: input.paymentMethod,
       paidAt: now(),
-      printedAt: now(),
+      printedAt: null,
       createdAt: now(),
     };
     store.bills.unshift(bill);
@@ -534,4 +543,115 @@ export async function applyLoyaltyDiscount(sessionId: string, percent: number) {
     session.discountPercent = Math.min(50, Math.max(0, percent));
     return store;
   });
+}
+
+export async function getReceiptForBill(billId: string) {
+  const store = await readStore();
+  const bill = store.bills.find((b) => b.id === billId);
+  if (!bill) throw new Error("Bill not found");
+  const session = store.sessions.find((s) => s.id === bill.sessionId);
+  if (!session) throw new Error("Session not found");
+  const totals = computeSessionTotals(store, bill.sessionId);
+  const { buildReceipt } = await import("./receipt");
+  const receipt = buildReceipt({
+    bill,
+    session,
+    settings: store.settings,
+    lines: totals.lines.map((l) => ({
+      name: l.name,
+      qty: l.qty,
+      unitPrice: l.unitPrice,
+      amount: l.unitPrice * l.qty,
+      kind: l.kind,
+    })),
+  });
+  return {
+    receipt,
+    printer: {
+      mode: store.settings.printerMode,
+      agentUrl: store.settings.printAgentUrl,
+      autoPrintOnPay: store.settings.autoPrintOnPay,
+    },
+  };
+}
+
+export async function getReceiptForSession(sessionId: string) {
+  const store = await readStore();
+  const bill = store.bills.find((b) => b.sessionId === sessionId);
+  if (!bill) throw new Error("No bill for this session yet — pay first");
+  return getReceiptForBill(bill.id);
+}
+
+export async function markBillPrinted(billId: string) {
+  return updateStore((store) => {
+    const bill = store.bills.find((b) => b.id === billId);
+    if (!bill) throw new Error("Bill not found");
+    bill.printedAt = now();
+    return store;
+  });
+}
+
+export async function updatePrinterSettings(input: {
+  printAgentUrl?: string;
+  printerMode?: "agent" | "browser";
+  autoPrintOnPay?: boolean;
+  cafeName?: string;
+  address?: string;
+  phone?: string;
+  receiptFooter?: string;
+}) {
+  return updateStore((store) => {
+    if (input.printAgentUrl !== undefined) {
+      store.settings.printAgentUrl = input.printAgentUrl.trim() || "http://127.0.0.1:9101";
+    }
+    if (input.printerMode) store.settings.printerMode = input.printerMode;
+    if (typeof input.autoPrintOnPay === "boolean") {
+      store.settings.autoPrintOnPay = input.autoPrintOnPay;
+    }
+    if (input.cafeName !== undefined) store.settings.cafeName = input.cafeName;
+    if (input.address !== undefined) store.settings.address = input.address;
+    if (input.phone !== undefined) store.settings.phone = input.phone;
+    if (input.receiptFooter !== undefined) {
+      store.settings.receiptFooter = input.receiptFooter;
+    }
+    return store;
+  }).then((s) => s.settings);
+}
+
+/** Try server-side forward to agent; client can also call agent directly (tablets). */
+export async function dispatchPrintToAgent(billId: string) {
+  const { receipt, printer } = await getReceiptForBill(billId);
+  const agentUrl = printer.agentUrl.replace(/\/$/, "");
+
+  try {
+    const res = await fetch(`${agentUrl}/print`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        billId: receipt.billId,
+        text: receipt.text,
+        escposBase64: receipt.escposBase64,
+      }),
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err || `Agent HTTP ${res.status}`);
+    }
+    await markBillPrinted(billId);
+    return {
+      ok: true as const,
+      via: "server→agent" as const,
+      receipt,
+      printer,
+    };
+  } catch (e) {
+    return {
+      ok: false as const,
+      via: "client-fallback" as const,
+      error: e instanceof Error ? e.message : "Agent unreachable",
+      receipt,
+      printer,
+    };
+  }
 }
